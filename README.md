@@ -1,4 +1,4 @@
-## Setting up JWT in Laravel
+## Setting up JWT in Laravel 10
 
 ### Step 01: Create the project
 Start by creating your Laravel project.
