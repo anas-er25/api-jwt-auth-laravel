@@ -2,6 +2,9 @@
 
 ### Step 01: Create the project
 Start by creating your Laravel project.
+```bash
+composer create-project laravel/laravel=10 project-name
+```
 
 ### Step 02: Database Configuration
 Configure your database in the `.env` file.
