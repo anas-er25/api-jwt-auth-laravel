@@ -1,66 +1,262 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## Setting up JWT in Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+### Step 01: Create the project
+Start by creating your Laravel project.
 
-## About Laravel
+### Step 02: Database Configuration
+Configure your database in the `.env` file.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Step 03: Create the API Controller
+Create your API Controller to handle endpoints.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Step 04: JWT Installation
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+#### Step #1
+Install JWT by running the following command:
 
-## Learning Laravel
+```bash
+composer require tymon/jwt-auth
+```
+#### Step #2
+Open the `app.php` file from the `/config` folder and make the following changes:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```php
+'providers' => [
+    // Other providers...
+    Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
+],
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+'aliases' => [
+    // Other aliases...
+    'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
+    'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
+],
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+#### Step #3
+Publish the JWT configuration file by running the command:
 
-## Laravel Sponsors
+```bash
+php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+#### Step #4
+Run migrations to create necessary tables:
 
-### Premium Partners
+```bash
+php artisan migrate
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+#### Step #5
+Generate the JWT secret key by running the command:
 
-## Contributing
+```bash
+php artisan jwt:secret
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### Step #6
+Open the `auth.php` file in the `/config` folder and add the following lines in the "guards" section:
+```php
+'guards' => [
+    // Other guards...
+    'api' => [
+        'driver' => 'jwt',
+        'provider' => 'users',
+    ],
+],
+```
 
-## Code of Conduct
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+#### Step #7
+Update the User model (`User.php`) as follows:
+```php
+<?php
 
-## Security Vulnerabilities
+namespace App\Models;
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-## License
+class User extends Authenticatable implements JWTSubject
+{
+    use HasApiTokens, HasFactory, Notifiable;
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
+}
+```
+
+#### Step #8: Create API Controller
+Run the following command to generate the API Controller:
+
+```bash
+php artisan make:controller Api/ApiController
+```
+
+Then, add the following code to your `ApiController`:
+
+```php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
+
+class ApiController extends Controller
+{
+    // User Register (POST, formdata)
+    public function register(Request $request)
+    {
+        // Data validation
+        $request->validate([
+            "name" => "required",
+            "email" => "required|email|unique:users",
+            "password" => "required|confirmed"
+        ]);
+
+        // User Model
+        User::create([
+            "name" => $request->name,
+            "email" => $request->email,
+            "password" => Hash::make($request->password)
+        ]);
+
+        // Response
+        return response()->json([
+            "status" => true,
+            "message" => "User registered successfully"
+        ]);
+    }
+
+    // User Login (POST, formdata)
+    public function login(Request $request)
+    {
+        // Data validation
+        $request->validate([
+            "email" => "required|email",
+            "password" => "required"
+        ]);
+
+        // JWTAuth
+        $token = JWTAuth::attempt([
+            "email" => $request->email,
+            "password" => $request->password
+        ]);
+
+        if (!empty($token)) {
+            return response()->json([
+                "status" => true,
+                "message" => "User logged in successfully",
+                "token" => $token
+            ]);
+        }
+
+        return response()->json([
+            "status" => false,
+            "message" => "Invalid details"
+        ]);
+    }
+
+    // User Profile (GET)
+    public function profile()
+    {
+        $userdata = auth()->user();
+
+        return response()->json([
+            "status" => true,
+            "message" => "Profile data",
+            "data" => $userdata
+        ]);
+    }
+
+    // To generate refresh token value
+    public function refreshToken()
+    {
+        $newToken = auth()->refresh();
+
+        return response()->json([
+            "status" => true,
+            "message" => "New access token",
+            "token" => $newToken
+        ]);
+    }
+
+    // User Logout (GET)
+    public function logout()
+    {
+        auth()->logout();
+
+        return response()->json([
+            "status" => true,
+            "message" => "User logged out successfully"
+        ]);
+    }
+}
+```
+
+#### Step #9: Update Routes
+Open the `api.php` file from the `/routes` folder and add the following routes:
+
+```php
+use App\Http\Controllers\Api\ApiController;
+
+Route::post("register", [ApiController::class, "register"]);
+Route::post("login", [ApiController::class, "login"]);
+
+Route::group([
+    "middleware" => ["auth:api"]
+], function () {
+    Route::get("profile", [ApiController::class, "profile"]);
+    Route::get("refresh", [ApiController::class, "refreshToken"]);
+    Route::get("logout", [ApiController::class, "logout"]);
+});
+
+```
+
+### These steps complete the setup for using JWT authentication in your Laravel project.
